@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sentiment & Sarcasm AI Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card-bg: rgba(22, 29, 49, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --pos-bg: rgba(16, 185, 129, 0.15);
+      --pos-text: #34d399;
+      --pos-bar: #10b981;
+      --neg-bg: rgba(239, 68, 68, 0.15);
+      --neg-text: #f87171;
+      --neg-bar: #ef4444;
+      --neu-bg: rgba(245, 158, 11, 0.15);
+      --neu-text: #fbbf24;
+      --neu-bar: #f59e0b;
+    }
+
+    * { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+    
+    body {
+      background: radial-gradient(circle at top right, #1e1b4b, var(--bg) 60%);
+      color: var(--text-main);
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px 16px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 680px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 36px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    }
+
+    .header-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #60a5fa;
+      background: rgba(59, 130, 246, 0.12);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 6px 0;
+      letter-spacing: -0.5px;
+    }
+
+    p.subtitle {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin: 0 0 24px 0;
+      line-height: 1.5;
+    }
+
+    .samples-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .sample-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .chip-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+      padding: 5px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 14px;
+      color: #fff;
+      font-size: 14px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+
+    .analyze-btn {
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .analyze-btn:hover {
+      opacity: 0.95;
+    }
+
+    .analyze-btn:active {
+      transform: scale(0.99);
+    }
+
+    /* Output Card Dashboard */
+    .result-dashboard {
+      margin-top: 28px;
+      display: none;
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .verdict-banner {
+      padding: 18px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .verdict-title {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+
+    .badge-pill {
+      font-size: 14px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      display: inline-block;
+    }
+
+    .badge-pill.positive { background: var(--pos-bg); color: var(--pos-text); border: 1px solid rgba(52, 211, 153, 0.3); }
+    .badge-pill.negative { background: var(--neg-bg); color: var(--neg-text); border: 1px solid rgba(248, 113, 113, 0.3); }
+    .badge-pill.neutral  { background: var(--neu-bg); color: var(--neu-text); border: 1px solid rgba(251, 191, 36, 0.3); }
+
+    .engine-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    @media (max-width: 540px) {
+      .engine-grid { grid-template-columns: 1fr; }
+    }
+
+    .engine-card {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .engine-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .engine-stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .alert-box {
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 10px;
+      color: #fca5a5;
+      font-size: 13px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header-badge">Dual-Engine Intelligence</div>
+  <h1>Food Review Sentiment &amp; Sarcasm AI</h1>
+  <p class="subtitle">Evaluates customer sentiment via Logistic Regression (TF-IDF) and catches contextual irony with RoBERTa self-attention.</p>
+
+  <div class="samples-bar">
+    <span class="sample-label">Try Examples:</span>
+    <button class="chip-btn" onclick="setReview('The chocolate cookies are fresh, crispy, and delicious. Highly recommend!')">Positive</button>
+    <button class="chip-btn" onclick="setReview('The bread arrived completely stale and rock-hard. Very disappointing.')">Negative</button>
+    <button class="chip-btn" onclick="setReview('Pure genius! Brilliant decision to deliver completely expired milk. Absolutely loved throwing it right into the trash.')">Sarcastic</button>
+  </div>
+
+  <textarea id="reviewInput" placeholder="Type or paste a customer review..."></textarea>
+  <button id="runBtn" class="analyze-btn" onclick="runAnalysis()">
+    <span id="btnText">Analyze Review</span>
+  </button>
+
+  <!-- Output Section -->
+  <div id="resultDashboard" class="result-dashboard">
+    <div class="verdict-banner">
+      <div>
+        <div class="verdict-title">Final Calibrated Sentiment</div>
+        <div id="finalBadge" class="badge-pill positive">Positive</div>
+      </div>
+      <div style="text-align: right;">
+        <div class="verdict-title">Irony Status</div>
+        <div id="sarcasmStatus" style="font-weight: 700; font-size: 15px;">No Sarcasm</div>
+      </div>
+    </div>
+
+    <div class="engine-grid">
+      <!-- Engine 1 -->
+      <div class="engine-card">
+        <div class="engine-label">Engine 1: Logistic Regression</div>
+        <div class="engine-stat">
+          <span id="rawMlLabel" style="color: #cbd5e1;">Positive</span>
+          <span id="rawMlScore" style="color: #60a5fa;">0.0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="mlProgress" class="progress-fill" style="background: var(--pos-bar);"></div>
+        </div>
+      </div>
+
+      <!-- Engine 2 -->
+      <div class="engine-card">
+        <div class="engine-label">Engine 2: RoBERTa Sarcasm</div>
+        <div class="engine-stat">
+          <span id="sarcasmLabel" style="color: #cbd5e1;">Probability</span>
+          <span id="sarcasmScore" style="color: #f87171;">0.0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="sarcasmProgress" class="progress-fill" style="background: var(--neg-bar);"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sarcasm Alert Banner -->
+    <div id="alertBox" class="alert-box">
+      <span>⚠️</span>
+      <span id="alertMsg">Sarcasm detected: Positive keywords were used ironically to mask dissatisfaction. Sentiment inverted.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setReview(text) {
+    document.getElementById("reviewInput").value = text;
+  }
+
+  async function runAnalysis() {
+    const text = document.getElementById("reviewInput").value.trim();
+    if (!text) {
+      alert("Please enter a review first!");
+      return;
+    }
+
+    const btn = document.getElementById("runBtn");
+    const btnText = document.getElementById("btnText");
+    btnText.textContent = "Analyzing Context...";
+    btn.disabled = true;
+
+    try {
+      const response = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ review: text })
+      });
+      const data = await response.json();
+
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      document.getElementById("resultDashboard").style.display = "block";
+
+      // 1. Final Sentiment Badge
+      const finalBadge = document.getElementById("finalBadge");
+      finalBadge.textContent = data.final_sentiment;
+      if (data.final_sentiment.includes("Positive")) {
+        finalBadge.className = "badge-pill positive";
+      } else if (data.final_sentiment.includes("Negative")) {
+        finalBadge.className = "badge-pill negative";
+      } else {
+        finalBadge.className = "badge-pill neutral";
+      }
+
+      // 2. Irony Text
+      const isSarc = data.is_sarcastic === "Yes";
+      document.getElementById("sarcasmStatus").textContent = isSarc ? "Sarcastic (Irony)" : "Literal (No Irony)";
+      document.getElementById("sarcasmStatus").style.color = isSarc ? "#f87171" : "#34d399";
+
+      // 3. Engine 1 Stats
+      document.getElementById("rawMlLabel").textContent = data.original_ml_sentiment;
+      document.getElementById("rawMlScore").textContent = data.sentiment_confidence;
+      const mlPerc = parseFloat(data.sentiment_confidence);
+      document.getElementById("mlProgress").style.width = mlPerc + "%";
+
+      // 4. Engine 2 Stats
+      document.getElementById("sarcasmScore").textContent = data.sarcasm_confidence;
+      const sarcPerc = parseFloat(data.sarcasm_confidence);
+      document.getElementById("sarcasmProgress").style.width = sarcPerc + "%";
+
+      // 5. Inversion Alert Box
+      const alertBox = document.getElementById("alertBox");
+      if (isSarc && data.original_ml_sentiment === "Positive") {
+        alertBox.style.display = "flex";
+        document.getElementById("alertMsg").textContent = data.sarcasm_explanation;
+      } else {
+        alertBox.style.display = "none";
+      }
+
+    } catch (e) {
+      alert("Failed to communicate with the Flask server.");
+    } finally {
+      btnText.textContent = "Analyze Review";
+      btn.disabled = false;
+    }
+  }
+</script>
+
+</body>
+</html>
